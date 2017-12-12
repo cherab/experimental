@@ -68,8 +68,8 @@ cdef class GaussianLine(SpectralSource):
 cdef class DopplerShiftedLine(SpectralSource):
 
     cdef:
-        public ParamType inty, temp, vel
-        public double natural_wavelength, cos_angle, weight, inst_sigma
+        public ParamType inty, temp, vel, natural_wavelength
+        public double cos_angle, weight, inst_sigma
 
     cdef update_parameter_values(self, list parameters)
 

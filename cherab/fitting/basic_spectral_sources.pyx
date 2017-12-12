@@ -23,11 +23,16 @@
 from scipy.constants import elementary_charge, speed_of_light, pi
 from libc.math cimport sqrt, exp, erfc
 
+from cherab.fitting.fit_parameters import FixedParameter
+
 cdef public double AMU = 1.66053892e-27
 cdef public double ELEMENTARY_CHARGE = elementary_charge
 cdef public double SPEED_OF_LIGHT = speed_of_light
 cdef public double PI = pi
 cdef public double DOF = 512.0 - 16.0
+
+
+# TODO - convert all variables to fitable parameters
 
 
 cdef class SpectralSource:
@@ -213,21 +218,23 @@ cdef class GaussianLine(SpectralSource):
 
 cdef class DopplerShiftedLine(SpectralSource):
 
-    def __init__(self, str name, intensity, temperature, double natural_wavelength, velocity,
+    def __init__(self, str name, intensity, temperature, natural_wavelength, velocity,
                  double cos_angle, double weight, bint intensity_from_peak=False, double inst_sigma=0.0):
+
+        if isinstance(natural_wavelength, (float, int)):
+            natural_wavelength = FixedParameter(name+'_nat_wvl', natural_wavelength)
 
         # Special case handling for case of data_peak
         if intensity_from_peak:
             inty = intensity.value
             temp = temperature.value
             vel = velocity.value
-            wvl = natural_wavelength * (1 + vel * cos_angle / SPEED_OF_LIGHT)
+            wvl = natural_wavelength.value * (1 + vel * cos_angle / SPEED_OF_LIGHT)
             sigma = sqrt(temp * ELEMENTARY_CHARGE / (weight * AMU)) * wvl / SPEED_OF_LIGHT
             sigma = sqrt(sigma*sigma + inst_sigma*inst_sigma)
             intensity.value = inty * (sigma * sqrt(2 * PI))
 
         self.name = name
-        self.natural_wavelength = natural_wavelength
         self.cos_angle = cos_angle
         self.weight = weight
         self.inst_sigma = inst_sigma
@@ -236,10 +243,11 @@ cdef class DopplerShiftedLine(SpectralSource):
         self.inty = intensity
         self.temp = temperature
         self.vel = velocity
+        self.natural_wavelength = natural_wavelength
 
     property fit_parameters:
         def __get__(self):
-            return [self.inty, self.temp, self.vel]
+            return [self.inty, self.temp, self.vel, self.natural_wavelength]
 
     cdef update_parameter_values(self, list parameters):
         cdef FreeParamType param
@@ -252,18 +260,22 @@ cdef class DopplerShiftedLine(SpectralSource):
         if self.vel.free:
             param = self.vel
             param.cset_normalised_value(parameters.pop(0))
+        if self.natural_wavelength.free:
+            param = self.natural_wavelength
+            param.cset_normalised_value(parameters.pop(0))
 
     cdef double[:] evaluate(self, double[:] wavelengths, double[:] output):
 
         cdef int i, n = wavelengths.shape[0]
-        cdef double temperature, centre_wvl, velocity, intensity, sigma, i0, exponent, temp, inst_sigma
+        cdef double temperature, centre_wvl, velocity, intensity, sigma, i0, exponent, temp, inst_sigma, natural_wavelength
 
         intensity = self.inty.get_value()
         temperature = self.temp.get_value()
         velocity = self.vel.get_value()
         inst_sigma = self.inst_sigma
+        natural_wavelength = self.natural_wavelength.get_value()
 
-        centre_wvl = self.natural_wavelength * (1 + velocity * self.cos_angle / SPEED_OF_LIGHT)
+        centre_wvl = natural_wavelength * (1 + velocity * self.cos_angle / SPEED_OF_LIGHT)
 
         # convert temperature to line width (sigma)
         sigma = sqrt(temperature * ELEMENTARY_CHARGE / (self.weight * AMU)) * centre_wvl / SPEED_OF_LIGHT

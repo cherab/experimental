@@ -91,11 +91,11 @@ class FitStrategy:
 # Manages the fitting of a whole profile through smaller strategic steps, individual FitStrategy classes
 class FitManager:
 
-    def __init__(self, psi, profiles):
+    def __init__(self, equilibrium, profiles):
         hrts_te, ks5_CVI_ti, ks5_CVI_inty, ks5_CVI_wvl = profiles
         self.hrts_profile = hrts_te
         self.ppf_profiles = (ks5_CVI_ti, ks5_CVI_inty, ks5_CVI_wvl)
-        self.psi = psi
+        self._equilibrium = equilibrium
         self._process_queue = []
         self._spectral_models = []
         self.time_manager = None
@@ -119,7 +119,7 @@ class FitManager:
 
             # TODO - this sort of call needs to move to notifier/messaging design pattern
             if type(self.time_manager) is TimeManager:
-                self.psi.set_time(t)
+                self._psin = self._equilibrium.time(t).psi_normalised
                 for spectral_model in self._spectral_models:
                     spectral_model.spectra.move_time_curser_to(t)
                 self.hrts_profile.move_time_curser_to(t)
