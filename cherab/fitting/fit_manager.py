@@ -176,7 +176,7 @@ class FitManager:
                     process.plot()
                     self.plot_ti_fit(i)
                     input("Final fitted conditions plot...")
-                    plt.close('all')
+                    # plt.close('all')
 
             if plot_level >= 1:
                 self.plot_current_fit(i)

@@ -240,7 +240,7 @@ cpdef mcmc_fit(MultiSpectraModel multi_spec_model, int n_points=20000, int n_thi
             sigma2 = sigma1 * sqrt(((meas_acc1 + delta)/accept1)*((1 - accept1)/(1 - meas_acc1 + delta)))
             if sigma2 > (param_fixed.vmax - param_fixed.vmin) * 0.1:
                 param_fixed.proposal_sigma /= 10
-                print("Can't change parameter sigma to be larger than 10% of valid parameter range.")
+                print("{} - Can't change parameter sigma to be larger than 10% of valid parameter range.".format(param_fixed.name))
             else:
                 param_fixed.proposal_sigma = sigma2
 
