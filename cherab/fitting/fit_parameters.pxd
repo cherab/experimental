@@ -131,19 +131,3 @@ cdef class RadialProfile(Function1D):
     cpdef update_parameter_values(self, list parameters)
 
     cdef double evaluate(self, double r) except? -1e999
-
-cdef class SkewGaussProfile(Function1D):
-
-    cdef:
-        public str name
-        public Parameter a
-        public Parameter mu
-        public Parameter sigma
-        public Parameter alpha
-        public Parameter a0
-
-    cpdef list free_parameters(self)
-
-    cpdef update_parameter_values(self, list parameters)
-
-    cdef double evaluate(self, double r) except? -1e999
